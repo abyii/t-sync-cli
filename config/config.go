@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/nacl/box"
 	"gopkg.in/yaml.v3"
 )
@@ -25,12 +26,13 @@ type RemoteConfig struct {
 }
 
 type Config struct {
-	Path           string                  `yaml:"path"`
-	DefaultRemote  string                  `yaml:"default_remote"`
-	DefaultKeyID   string                  `yaml:"default_key_id"`
-	PrivateKeyPath string                  `yaml:"private_key_path,omitempty"`
-	PublicKeys     map[string]string       `yaml:"public_keys"` // keyID -> hex-encoded pubkey
-	Remotes        map[string]RemoteConfig `yaml:"remotes"`
+	Path             string                  `yaml:"path"`
+	DefaultRemote    string                  `yaml:"default_remote"`
+	DefaultKeyID     string                  `yaml:"default_key_id"`
+	PrivateKeyPath   string                  `yaml:"private_key_path,omitempty"`
+	CompressionLevel *int                    `yaml:"compression_level,omitempty"`
+	PublicKeys       map[string]string       `yaml:"public_keys"` // keyID -> hex-encoded pubkey
+	Remotes          map[string]RemoteConfig `yaml:"remotes"`
 }
 
 // GetTSyncDir returns the path to the global ~/.tsync directory
@@ -198,4 +200,15 @@ func GenerateAndSaveKeypair(keyID string) (pubKeyHex string, err error) {
 	}
 
 	return hex.EncodeToString(pub[:]), nil
+}
+
+// DerivePublicKey derives the public key from a 32-byte private key using Curve25519 base point multiplication.
+func DerivePublicKey(privKey []byte) ([]byte, error) {
+	if len(privKey) != 32 {
+		return nil, fmt.Errorf("invalid private key length: expected 32 bytes, got %d", len(privKey))
+	}
+	var pub, priv [32]byte
+	copy(priv[:], privKey)
+	curve25519.ScalarBaseMult(&pub, &priv)
+	return pub[:], nil
 }

@@ -42,6 +42,12 @@ var statusCmd = &cobra.Command{
 			fmt.Println("Default Key ID: (none configured)")
 		}
 
+		if cfg.CompressionLevel != nil {
+			fmt.Printf("Compression Level:   %d\n", *cfg.CompressionLevel)
+		} else {
+			fmt.Println("Compression Level:   (default/not set)")
+		}
+
 		fmt.Println("\nPublic Keys:")
 		if len(cfg.PublicKeys) == 0 {
 			fmt.Println("  (none registered)")

@@ -15,8 +15,14 @@ import (
 	"github.com/abyii/t-sync-sdk-go/tsync"
 )
 
+var StorageOverride tsync.Storage
+
 // ResolveRemoteStorage returns a T-Sync Storage interface for the specified remote name (or default remote).
 func ResolveRemoteStorage(remoteName string) (tsync.Storage, error) {
+	if StorageOverride != nil {
+		return StorageOverride, nil
+	}
+
 	cfg := LoadRepoConfig()
 
 	if remoteName == "" {

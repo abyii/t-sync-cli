@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	remotePath      string
-	remoteBucket    string
-	remotePrefix    string
-	remoteRegion    string
-	remoteEndpoint  string
-	remoteNamespace string
-	remoteAuthType  string
+	remotePath             string
+	remoteBucket           string
+	remotePrefix           string
+	remoteRegion           string
+	remoteEndpoint         string
+	remoteNamespace        string
+	remoteAuthType         string
+	remoteCompressionLevel int
 )
 
 var remoteCmd = &cobra.Command{
@@ -69,6 +70,14 @@ Providers and Examples:
 		provider := args[1]
 
 		cfg := LoadRepoConfig()
+
+		if remoteCompressionLevel != -2 {
+			if remoteCompressionLevel < -1 || remoteCompressionLevel > 9 {
+				fmt.Fprintln(os.Stderr, "Error: compression level must be between -1 and 9")
+				os.Exit(1)
+			}
+			cfg.CompressionLevel = &remoteCompressionLevel
+		}
 
 		if _, exists := cfg.Remotes[name]; exists {
 			fmt.Fprintf(os.Stderr, "Error: Remote '%s' already exists.\n", name)
@@ -218,6 +227,7 @@ func init() {
 	remoteAddCmd.Flags().StringVar(&remoteEndpoint, "endpoint", "", "Custom endpoint URL (for 's3', 'http')")
 	remoteAddCmd.Flags().StringVar(&remoteNamespace, "namespace", "", "OCI Object Storage Namespace (for 'oci')")
 	remoteAddCmd.Flags().StringVar(&remoteAuthType, "auth-type", "", "Authentication helper parameter")
+	remoteAddCmd.Flags().IntVar(&remoteCompressionLevel, "compression-level", -2, "Compression level (0 for Store, 1-9 for Deflate)")
 
 	remoteCmd.AddCommand(remoteAddCmd)
 	remoteCmd.AddCommand(remoteRemoveCmd)

@@ -12,11 +12,12 @@ import (
 )
 
 var (
-	backupRemote      string
-	backupLabel       string
-	backupConcurrency int
-	backupKeyID       string
-	singleVersionMode bool
+	backupRemote           string
+	backupLabel            string
+	backupConcurrency      int
+	backupKeyID            string
+	singleVersionMode      bool
+	backupCompressionLevel int
 )
 
 var backupCmd = &cobra.Command{
@@ -105,6 +106,17 @@ unless a FULL version is preferred based on the SDK's heuristics or --single-ver
 			}
 		}
 
+		var compLevel *int
+		if backupCompressionLevel != -2 {
+			if backupCompressionLevel < -1 || backupCompressionLevel > 9 {
+				fmt.Fprintln(os.Stderr, "Error: compression level must be between -1 and 9")
+				os.Exit(1)
+			}
+			compLevel = &backupCompressionLevel
+		} else {
+			compLevel = cfg.CompressionLevel
+		}
+
 		ctx := context.Background()
 		opts := tsync.BackupOptions{
 			Label:             backupLabel,
@@ -113,6 +125,7 @@ unless a FULL version is preferred based on the SDK's heuristics or --single-ver
 			Concurrency:       concurrency,
 			KeyID:             keyID,
 			PublicKeys:        publicKeysBytes,
+			CompressionLevel:  compLevel,
 			OnProgress:        MakeProgressCallback("BACKUP"),
 		}
 
@@ -137,6 +150,7 @@ func init() {
 	backupCmd.Flags().IntVar(&backupConcurrency, "concurrency", 0, "Number of concurrent file uploads")
 	backupCmd.Flags().StringVar(&backupKeyID, "key-id", "", "Public key ID to encrypt the zip password (defaults to config default)")
 	backupCmd.Flags().BoolVar(&singleVersionMode, "single-version", false, "Discard history and replace remote store with this single version")
+	backupCmd.Flags().IntVar(&backupCompressionLevel, "compression-level", -2, "Compression level (0 for Store, 1-9 for Deflate)")
 
 	RootCmd.AddCommand(backupCmd)
 }

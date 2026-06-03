@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/abyii/zip-xxh3 v1.9.1 // indirect
+	github.com/abyii/zip-xxh3 v1.9.2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.8 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.18 // indirect

@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	forceInit bool
+	forceInit            bool
+	initCompressionLevel int
 )
 
 var initCmd = &cobra.Command{
@@ -46,6 +47,14 @@ var initCmd = &cobra.Command{
 			Remotes:       make(map[string]config.RemoteConfig),
 		}
 
+		if initCompressionLevel != -2 {
+			if initCompressionLevel < -1 || initCompressionLevel > 9 {
+				fmt.Fprintln(os.Stderr, "Error: compression level must be between -1 and 9")
+				os.Exit(1)
+			}
+			cfg.CompressionLevel = &initCompressionLevel
+		}
+
 		// Check if a default key exists in keys folder
 		keysDir, err := config.GetKeysDir()
 		if err == nil {
@@ -72,5 +81,6 @@ var initCmd = &cobra.Command{
 
 func init() {
 	initCmd.Flags().BoolVar(&forceInit, "force", false, "Force reinitialization of the config file")
+	initCmd.Flags().IntVar(&initCompressionLevel, "compression-level", -2, "Compression level (0 for Store, 1-9 for Deflate)")
 	RootCmd.AddCommand(initCmd)
 }
