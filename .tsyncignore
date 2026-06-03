@@ -1,0 +1,6 @@
+# Ignore compiled binaries
+*.exe
+tsync
+
+# Ignore local backup vault
+my-backup-vault/

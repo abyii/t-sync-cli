@@ -1,1 +1,1 @@
-# t-sync-cli
+# T-Sync CLI Project
