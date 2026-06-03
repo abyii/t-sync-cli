@@ -73,7 +73,7 @@ func NewIgnoreMatcher(baseDir string) *IgnoreMatcher {
 	m := &IgnoreMatcher{
 		patterns: []string{
 			".git/",
-			".tsync/",
+			".tsync-config/",
 		},
 	}
 

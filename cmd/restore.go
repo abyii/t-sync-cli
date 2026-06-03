@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"t-sync-cli/config"
 	"t-sync-cli/tui"
@@ -36,6 +37,7 @@ If --zip is specified, reconstructs the files into a single ZIP archive on-the-f
 Use --interactive to selectively check files from a checklist TUI.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		startTime := time.Now()
 		versionID, err := strconv.ParseUint(args[0], 10, 64)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Invalid version ID '%s': %v\n", args[0], err)
@@ -151,6 +153,10 @@ Use --interactive to selectively check files from a checklist TUI.`,
 			SkipDecryptionErrors: true,
 		}
 
+		if restoreZip == "__DEFAULT__" {
+			restoreZip = fmt.Sprintf("restore_%d.zip", versionID)
+		}
+
 		if restoreZip != "" {
 			// Reconstruct ZIP on-the-fly
 			zipFile, err := os.Create(restoreZip)
@@ -185,7 +191,7 @@ Use --interactive to selectively check files from a checklist TUI.`,
 			os.Exit(1)
 		}
 
-		fmt.Println("\n✔ Restoration completed successfully!")
+		fmt.Printf("\n✔ Restoration completed successfully! (Duration: %v)\n", time.Since(startTime).Round(time.Millisecond))
 	},
 }
 
@@ -196,6 +202,7 @@ func init() {
 	restoreCmd.Flags().StringVar(&restorePrivateKey, "private-key", "", "Path to the Curve25519 hex private key file")
 	restoreCmd.Flags().BoolVar(&noOverwrite, "no-overwrite", false, "Skip overwriting existing identical files")
 	restoreCmd.Flags().StringVar(&restoreZip, "zip", "", "Reconstruct and write directly to a local ZIP file path")
+	restoreCmd.Flags().Lookup("zip").NoOptDefVal = "__DEFAULT__"
 	restoreCmd.Flags().BoolVarP(&restoreInteractive, "interactive", "i", false, "Interactively check files to restore from checklist TUI")
 
 	RootCmd.AddCommand(restoreCmd)

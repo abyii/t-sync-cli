@@ -427,6 +427,23 @@ func TestCLI_EndToEnd(t *testing.T) {
 		t.Errorf("Expected 'Another test file content.', got: '%s'", string(b2))
 	}
 
+	// Step 12b: Restore to zip without specifying name (optional flag argument)
+	t.Log("Restoring version 1 to zip (default filename)...")
+	out, err = runCmd("restore", fmt.Sprintf("%d", version1ID), "--zip", "--repo-path", repoDir)
+	if err != nil {
+		t.Fatalf("restore to zip failed: %v, output: %s", err, out)
+	}
+	if !strings.Contains(out, "Restoration completed successfully!") {
+		t.Errorf("Unexpected restore output: %s", out)
+	}
+	
+	defaultZipPath := fmt.Sprintf("restore_%d.zip", version1ID)
+	if _, err := os.Stat(defaultZipPath); os.IsNotExist(err) {
+		t.Errorf("Expected default zip file to be created at: %s", defaultZipPath)
+	} else {
+		os.Remove(defaultZipPath)
+	}
+
 	// Step 13: Delete key
 	t.Log("Testing keys delete...")
 	out, err = runCmd("keys", "delete", "default", "--repo-path", repoDir)

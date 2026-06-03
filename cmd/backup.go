@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"t-sync-cli/config"
 
@@ -27,6 +28,7 @@ var backupCmd = &cobra.Command{
 Only modifications relative to the latest FULL version are backed up (emitted as a DELTA),
 unless a FULL version is preferred based on the SDK's heuristics or --single-version is set.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		startTime := time.Now()
 		repoPath := GetRepoPath()
 		cfg := LoadRepoConfig()
 
@@ -141,6 +143,7 @@ unless a FULL version is preferred based on the SDK's heuristics or --single-ver
 		fmt.Printf("Label:        %s\n", version.Label)
 		fmt.Printf("Kind:         %v\n", version.Kind)
 		fmt.Printf("Timestamp:    %s\n", version.BackupTimestamp.AsTime().Local().Format("2006-01-02 15:04:05"))
+		fmt.Printf("Duration:     %v\n", time.Since(startTime).Round(time.Millisecond))
 	},
 }
 

@@ -18,7 +18,7 @@ var (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new T-Sync repository config for this folder",
-	Long:  `Creates a new repository configuration file in ~/.tsync/ mapped to the current absolute path.`,
+	Long:  `Creates a new repository configuration file in ~/.tsync-config/ mapped to the current absolute path.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		repoPath := GetRepoPath()
 		absPath, err := filepath.Abs(repoPath)

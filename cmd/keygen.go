@@ -19,7 +19,7 @@ var keygenCmd = &cobra.Command{
 	Use:   "keygen",
 	Short: "Generate a new Curve25519 keypair for backup encryption",
 	Long: `Generate a new 32-byte Curve25519 keypair. 
-The private key is saved securely at ~/.tsync/keys/<key_id>.key,
+The private key is saved securely at ~/.tsync-config/keys/<key_id>.key,
 and the public key is printed and optionally registered in the local repo config.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if keyIDFlag == "" {
@@ -66,7 +66,7 @@ and the public key is printed and optionally registered in the local repo config
 		} else {
 			fmt.Println("\nTo use this key for encryption, register the public key in your repository config:")
 			fmt.Printf("  tsync init (if not initialized yet)\n")
-			fmt.Printf("  Or add to config file: ~/.tsync/<mangled_path>.yaml\n")
+			fmt.Printf("  Or add to config file: ~/.tsync-config/<mangled_path>.yaml\n")
 		}
 	},
 }

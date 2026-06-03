@@ -124,7 +124,7 @@ var keysImportCmd = &cobra.Command{
 	Use:   "import <key-id> <private-key-hex>",
 	Short: "Import a private key from hex string",
 	Long: `Import an existing Curve25519 private key from its 32-byte hex-encoded representation.
-Saves the key as ~/.tsync/keys/<key-id>.key and automatically registers the derived public key 
+Saves the key as ~/.tsync-config/keys/<key-id>.key and automatically registers the derived public key 
 in the current repository configuration (if initialized).`,
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -262,7 +262,7 @@ func runKeysList() {
 	}
 
 	if len(keyFiles) == 0 {
-		fmt.Println("No keys found in ~/.tsync/keys/")
+		fmt.Println("No keys found in ~/.tsync-config/keys/")
 		return
 	}
 
@@ -313,7 +313,7 @@ func runKeysList() {
 func init() {
 	keysListCmd := &cobra.Command{
 		Use:   "list",
-		Short: "List all local keys in ~/.tsync/keys/",
+		Short: "List all local keys in ~/.tsync-config/keys/",
 		Run: func(cmd *cobra.Command, args []string) {
 			runKeysList()
 		},

@@ -35,20 +35,20 @@ type Config struct {
 	Remotes          map[string]RemoteConfig `yaml:"remotes"`
 }
 
-// GetTSyncDir returns the path to the global ~/.tsync directory
+// GetTSyncDir returns the path to the global ~/.tsync-config directory
 func GetTSyncDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
-	tsyncDir := filepath.Join(home, ".tsync")
+	tsyncDir := filepath.Join(home, ".tsync-config")
 	if err := os.MkdirAll(tsyncDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create ~/.tsync directory: %w", err)
+		return "", fmt.Errorf("failed to create ~/.tsync-config directory: %w", err)
 	}
 	return tsyncDir, nil
 }
 
-// GetKeysDir returns the path to ~/.tsync/keys
+// GetKeysDir returns the path to ~/.tsync-config/keys
 func GetKeysDir() (string, error) {
 	base, err := GetTSyncDir()
 	if err != nil {
@@ -56,7 +56,7 @@ func GetKeysDir() (string, error) {
 	}
 	keysDir := filepath.Join(base, "keys")
 	if err := os.MkdirAll(keysDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create ~/.tsync/keys directory: %w", err)
+		return "", fmt.Errorf("failed to create ~/.tsync-config/keys directory: %w", err)
 	}
 	return keysDir, nil
 }
@@ -146,7 +146,7 @@ func LoadPrivateKey(keyID string) ([]byte, error) {
 		}
 	}
 
-	// 2. Check private key file in ~/.tsync/keys/
+	// 2. Check private key file in ~/.tsync-config/keys/
 	keysDir, err := GetKeysDir()
 	if err != nil {
 		return nil, err
