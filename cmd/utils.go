@@ -142,3 +142,19 @@ func HexDecodeKey(h string) ([]byte, error) {
 	h = strings.TrimSpace(h)
 	return hex.DecodeString(h)
 }
+
+// IsNotExistError checks if the error indicates a file/object does not exist or was not found.
+func IsNotExistError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if os.IsNotExist(err) {
+		return true
+	}
+	errLower := strings.ToLower(err.Error())
+	return strings.Contains(errLower, "does not exist") ||
+		strings.Contains(errLower, "not found") ||
+		strings.Contains(errLower, "404") ||
+		strings.Contains(errLower, "nosuchkey") ||
+		strings.Contains(errLower, "objectnotfound")
+}

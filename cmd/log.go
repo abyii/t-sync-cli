@@ -31,7 +31,7 @@ var logCmd = &cobra.Command{
 		sm, err := client.ReadMetadata(ctx)
 		if err != nil {
 			// If .tsync file doesn't exist, it means remote is empty/new
-			if os.IsNotExist(err) || (err != nil && (err.Error() == "failed to read store metadata: file does not exist" || os.IsNotExist(err))) {
+			if IsNotExistError(err) {
 				fmt.Println("No backups found in remote store. Run 'tsync backup' first.")
 				return
 			}
@@ -45,7 +45,11 @@ var logCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("History of Remote Store [%s]:\n", sm.StoreLabel())
+		if label := sm.StoreLabel(); label != "" {
+			fmt.Printf("History of Remote Store [%s]:\n", label)
+		} else {
+			fmt.Println("History of Remote Store:")
+		}
 		fmt.Printf("Last updated: %s\n\n", sm.LastUpdated().Local().Format("2006-01-02 15:04:05"))
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)

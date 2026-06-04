@@ -41,6 +41,10 @@ var diffCmd = &cobra.Command{
 		ctx := context.Background()
 		pbBytes, err := destStore.Read(ctx, ".tsync")
 		if err != nil {
+			if IsNotExistError(err) {
+				fmt.Fprintln(os.Stderr, "No backups found in remote store. Run 'tsync backup' first.")
+				os.Exit(1)
+			}
 			fmt.Fprintf(os.Stderr, "Error reading store metadata: %v\n", err)
 			os.Exit(1)
 		}

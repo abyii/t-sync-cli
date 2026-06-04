@@ -338,6 +338,9 @@ func loadMetadata() (*tsyncv2.BackupMetadata, error) {
 	if inspectFile != "" {
 		data, err := os.ReadFile(inspectFile)
 		if err != nil {
+			if os.IsNotExist(err) {
+				return nil, fmt.Errorf("metadata file '%s' does not exist", inspectFile)
+			}
 			return nil, fmt.Errorf("failed to read metadata file '%s': %w", inspectFile, err)
 		}
 		var rawMeta tsyncv2.BackupMetadata
@@ -355,6 +358,9 @@ func loadMetadata() (*tsyncv2.BackupMetadata, error) {
 	ctx := context.Background()
 	pbBytes, err := destStore.Read(ctx, ".tsync")
 	if err != nil {
+		if IsNotExistError(err) {
+			return nil, fmt.Errorf("no backups found in remote store. Run 'tsync backup' first.")
+		}
 		return nil, fmt.Errorf("failed to read store metadata from remote: %w", err)
 	}
 
