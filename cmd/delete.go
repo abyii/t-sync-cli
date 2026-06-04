@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/abyii/t-sync-sdk-go/tsync"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	"github.com/spf13/cobra"
 )
 
@@ -15,9 +15,8 @@ var rmRemote string
 var rmCmd = &cobra.Command{
 	Use:   "rm <version-id>",
 	Short: "Delete a backup version from the remote store",
-	Long: `Deletes the specified backup version. 
-If other versions are deltas depending on this version, they will be promoted to FULL.
-This also removes any file parts orphaned by this deletion from the remote storage.`,
+	Long: `Deletes the specified backup version from the remote store metadata.
+Use 'tsync gc' afterwards to reclaim disk space from any orphaned file-part objects.`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		versionID, err := strconv.ParseUint(args[0], 10, 64)

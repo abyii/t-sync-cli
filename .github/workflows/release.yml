@@ -1,0 +1,101 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            binary_name: tsync-linux-amd64
+            compress: true
+          - goos: linux
+            goarch: arm64
+            binary_name: tsync-linux-arm64
+            compress: true
+          - goos: windows
+            goarch: amd64
+            binary_name: tsync-windows-amd64.exe
+            compress: true
+          - goos: windows
+            goarch: arm64
+            binary_name: tsync-windows-arm64.exe
+            compress: false
+          - goos: darwin
+            goarch: amd64
+            binary_name: tsync-darwin-amd64
+            compress: false
+          - goos: darwin
+            goarch: arm64
+            binary_name: tsync-darwin-arm64
+            compress: false
+
+    steps:
+      - name: Checkout CLI repository
+        uses: actions/checkout@v4
+        with:
+          path: t-sync-cli
+
+      - name: Checkout SDK repository
+        uses: actions/checkout@v4
+        with:
+          repository: abyii/t-sync-sdk-go
+          path: t-sync-sdk-go
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.4'
+          cache: true
+          cache-dependency-path: t-sync-cli/go.sum
+
+      - name: Build Binary
+        working-directory: t-sync-cli
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
+            -ldflags="-s -w" \
+            -o ${{ matrix.binary_name }} \
+            main.go
+
+      - name: Set up UPX
+        if: ${{ matrix.compress }}
+        uses: crazy-max/ghaction-upx@v4
+        with:
+          install-only: true
+
+      - name: Compress Binary with UPX
+        if: ${{ matrix.compress }}
+        run: |
+          upx --best --lzma t-sync-cli/${{ matrix.binary_name }}
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary_name }}
+          path: t-sync-cli/${{ matrix.binary_name }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publish Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: t-sync-cli/${{ matrix.binary_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

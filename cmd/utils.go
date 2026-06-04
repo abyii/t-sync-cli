@@ -8,11 +8,11 @@ import (
 
 	"t-sync-cli/config"
 
-	"github.com/abyii/t-sync-sdk-go/storage_clients"
-	_ "github.com/abyii/t-sync-sdk-go/storage_clients/http"
-	_ "github.com/abyii/t-sync-sdk-go/storage_clients/oci"
-	_ "github.com/abyii/t-sync-sdk-go/storage_clients/s3"
-	"github.com/abyii/t-sync-sdk-go/tsync"
+	"github.com/abyii/t-sync-sdk-go/v2/storage_clients"
+	_ "github.com/abyii/t-sync-sdk-go/v2/storage_clients/http"
+	_ "github.com/abyii/t-sync-sdk-go/v2/storage_clients/oci"
+	_ "github.com/abyii/t-sync-sdk-go/v2/storage_clients/s3"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 )
 
 var StorageOverride tsync.Storage

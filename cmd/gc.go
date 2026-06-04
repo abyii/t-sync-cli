@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/abyii/t-sync-sdk-go/tsync"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	"github.com/spf13/cobra"
 )
 

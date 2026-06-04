@@ -8,7 +8,7 @@ import (
 
 	"t-sync-cli/config"
 
-	"github.com/abyii/t-sync-sdk-go/tsync"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	"github.com/spf13/cobra"
 )
 
@@ -25,8 +25,8 @@ var backupCmd = &cobra.Command{
 	Use:   "backup",
 	Short: "Create a new backup version of the current repository",
 	Long: `Backup files in the repository directory to the specified remote store.
-Only modifications relative to the latest FULL version are backed up (emitted as a DELTA),
-unless a FULL version is preferred based on the SDK's heuristics or --single-version is set.`,
+All files are backed up into a content-addressed Merkle tree snapshot,
+unless --single-version is set.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		startTime := time.Now()
 		repoPath := GetRepoPath()
@@ -141,7 +141,10 @@ unless a FULL version is preferred based on the SDK's heuristics or --single-ver
 		fmt.Println("\n✔ Backup completed successfully!")
 		fmt.Printf("Version ID:   %d\n", version.SnowflakeId)
 		fmt.Printf("Label:        %s\n", version.Label)
-		fmt.Printf("Kind:         %v\n", version.Kind)
+		fmt.Printf("Root Hash:    %s\n", version.RootTreeHash)
+		if version.PrecedingVersionId != 0 {
+			fmt.Printf("Preceding ID: %d\n", version.PrecedingVersionId)
+		}
 		fmt.Printf("Timestamp:    %s\n", version.BackupTimestamp.AsTime().Local().Format("2006-01-02 15:04:05"))
 		fmt.Printf("Duration:     %v\n", time.Since(startTime).Round(time.Millisecond))
 	},

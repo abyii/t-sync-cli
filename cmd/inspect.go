@@ -7,8 +7,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	tsyncv1 "github.com/abyii/t-sync-sdk-go/gen/go/com/github/abyii/tsync/v1"
-	"github.com/abyii/t-sync-sdk-go/tsync"
+	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -49,6 +49,7 @@ var inspectSummaryCmd = &cobra.Command{
 			fmt.Printf("Last Updated:    %s\n", meta.LastUpdated.AsTime().Local().Format("2006-01-02 15:04:05"))
 		}
 		fmt.Printf("Total Versions:  %d\n", len(meta.Versions))
+		fmt.Printf("Total TreeNodes: %d\n", len(meta.Trees))
 		fmt.Printf("Total Unique Files: %d\n", len(meta.Files))
 
 		fmt.Println("\nRegistered Public Keys in Store:")
@@ -79,7 +80,7 @@ var inspectVersionsCmd = &cobra.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintln(w, "VERSION ID\tTIMESTAMP\tKIND\tPARENT ID\tFILES\tSIZE\tCOMPRESSED\tLABEL")
+		fmt.Fprintln(w, "VERSION ID\tTIMESTAMP\tROOT HASH\tPRECEDING ID\tFILES\tSIZE\tCOMPRESSED\tLABEL")
 
 		var versionIDs []uint64
 		for k := range meta.Versions {
@@ -100,14 +101,11 @@ var inspectVersionsCmd = &cobra.Command{
 			k := fmt.Sprintf("%d", id)
 			v := meta.Versions[k]
 			
-			kindStr := "FULL"
-			if v.Kind == tsyncv1.VersionKind_VERSION_KIND_DELTA {
-				kindStr = "DELTA"
-			}
+			rootHashStr := truncateKey(v.RootTreeHash)
 			
-			parentIDStr := "-"
-			if v.Kind == tsyncv1.VersionKind_VERSION_KIND_DELTA {
-				parentIDStr = fmt.Sprintf("%d", v.ParentId)
+			precedingIDStr := "-"
+			if v.PrecedingVersionId != 0 {
+				precedingIDStr = fmt.Sprintf("%d", v.PrecedingVersionId)
 			}
 
 			fileCount, uncomp, comp, err := getInspectVersionStats(meta, v)
@@ -123,8 +121,8 @@ var inspectVersionsCmd = &cobra.Command{
 			fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\t%s\t%s\t%s\n",
 				id,
 				v.BackupTimestamp.AsTime().Local().Format("2006-01-02 15:04:05"),
-				kindStr,
-				parentIDStr,
+				rootHashStr,
+				precedingIDStr,
 				fileCount,
 				FormatBytes(uncomp),
 				FormatBytes(comp),
@@ -161,45 +159,18 @@ var inspectVersionCmd = &cobra.Command{
 		}
 
 		fmt.Printf("--- Version %d Details ---\n", versionID)
-		fmt.Printf("Timestamp:  %s\n", v.BackupTimestamp.AsTime().Local().Format("2006-01-02 15:04:05"))
-		fmt.Printf("Kind:       %s\n", v.Kind.String())
-		if v.Kind == tsyncv1.VersionKind_VERSION_KIND_DELTA {
-			fmt.Printf("Parent ID:  %d\n", v.ParentId)
+		fmt.Printf("Timestamp:    %s\n", v.BackupTimestamp.AsTime().Local().Format("2006-01-02 15:04:05"))
+		fmt.Printf("Root Hash:    %s\n", v.RootTreeHash)
+		if v.PrecedingVersionId != 0 {
+			fmt.Printf("Preceding ID: %d\n", v.PrecedingVersionId)
 		}
 		if v.Label != "" {
-			fmt.Printf("Label:      %s\n", v.Label)
+			fmt.Printf("Label:        %s\n", v.Label)
 		}
 
 		if inspectVersionRaw {
-			fmt.Println("\nRaw Mappings in Metadata:")
-			if v.Kind == tsyncv1.VersionKind_VERSION_KIND_FULL {
-				w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-				fmt.Fprintln(w, "FILE PATH\tFILE KEY")
-				for path, fKey := range v.PathToFileKey {
-					fmt.Fprintf(w, "%s\t%s\n", path, fKey)
-				}
-				w.Flush()
-			} else {
-				fmt.Println("Delta Changes:")
-				if len(v.DeltaChanges) == 0 {
-					fmt.Println("  (none)")
-				} else {
-					w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-					fmt.Fprintln(w, "FILE PATH\tFILE KEY")
-					for path, fKey := range v.DeltaChanges {
-						fmt.Fprintf(w, "%s\t%s\n", path, fKey)
-					}
-					w.Flush()
-				}
-				fmt.Println("\nDelta Deleted:")
-				if len(v.DeltaDeleted) == 0 {
-					fmt.Println("  (none)")
-				} else {
-					for _, path := range v.DeltaDeleted {
-						fmt.Printf("  - %s\n", path)
-					}
-				}
-			}
+			fmt.Println("\nRaw Tree Structure:")
+			printRawTree(v.RootTreeHash, "  ", meta.Trees)
 		} else {
 			resolvedMap, err := tsync.ResolveVersionMap(meta, versionID)
 			if err != nil {
@@ -226,6 +197,27 @@ var inspectVersionCmd = &cobra.Command{
 			w.Flush()
 		}
 	},
+}
+
+func printRawTree(treeHash string, indent string, trees map[string]*tsyncv2.TreeNode) {
+	node, exists := trees[treeHash]
+	if !exists {
+		fmt.Printf("%s[MISSING TREE NODE: %s]\n", indent, treeHash)
+		return
+	}
+	for _, entry := range node.Entries {
+		switch n := entry.Node.(type) {
+		case *tsyncv2.TreeEntry_File:
+			if n.File == nil {
+				fmt.Printf("%s- %s (nil file)\n", indent, entry.Name)
+			} else {
+				fmt.Printf("%s- %s (crc32=0x%08x, size=%d)\n", indent, entry.Name, n.File.Crc32, n.File.UncompressedSize)
+			}
+		case *tsyncv2.TreeEntry_SubtreeHash:
+			fmt.Printf("%s+ %s/ (hash=%s)\n", indent, entry.Name, truncateKey(n.SubtreeHash))
+			printRawTree(n.SubtreeHash, indent+"  ", trees)
+		}
+	}
 }
 
 var inspectFilesCmd = &cobra.Command{
@@ -305,13 +297,50 @@ var inspectFileCmd = &cobra.Command{
 	},
 }
 
-func loadMetadata() (*tsyncv1.BackupMetadata, error) {
+var inspectTreeCmd = &cobra.Command{
+	Use:   "tree <tree-hash>",
+	Short: "Show details for a specific content-addressed TreeNode",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		treeHash := args[0]
+		meta, err := loadMetadata()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+
+		node, exists := meta.Trees[treeHash]
+		if !exists {
+			fmt.Fprintf(os.Stderr, "Error: TreeNode for hash '%s' not found.\n", treeHash)
+			os.Exit(1)
+		}
+
+		fmt.Printf("--- TreeNode Details for '%s' ---\n", treeHash)
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "ENTRY NAME\tTYPE\tTARGET HASH/METADATA")
+		for _, entry := range node.Entries {
+			switch n := entry.Node.(type) {
+			case *tsyncv2.TreeEntry_File:
+				if n.File == nil {
+					fmt.Fprintf(w, "%s\tFILE\t(nil)\n", entry.Name)
+				} else {
+					fmt.Fprintf(w, "%s\tFILE\tcrc32=0x%08x, size=%d\n", entry.Name, n.File.Crc32, n.File.UncompressedSize)
+				}
+			case *tsyncv2.TreeEntry_SubtreeHash:
+				fmt.Fprintf(w, "%s/\tSUBTREE\thash=%s\n", entry.Name, n.SubtreeHash)
+			}
+		}
+		w.Flush()
+	},
+}
+
+func loadMetadata() (*tsyncv2.BackupMetadata, error) {
 	if inspectFile != "" {
 		data, err := os.ReadFile(inspectFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read metadata file '%s': %w", inspectFile, err)
 		}
-		var rawMeta tsyncv1.BackupMetadata
+		var rawMeta tsyncv2.BackupMetadata
 		if err := proto.Unmarshal(data, &rawMeta); err != nil {
 			return nil, fmt.Errorf("failed to parse metadata protobuf: %w", err)
 		}
@@ -329,14 +358,14 @@ func loadMetadata() (*tsyncv1.BackupMetadata, error) {
 		return nil, fmt.Errorf("failed to read store metadata from remote: %w", err)
 	}
 
-	var rawMeta tsyncv1.BackupMetadata
+	var rawMeta tsyncv2.BackupMetadata
 	if err := proto.Unmarshal(pbBytes, &rawMeta); err != nil {
 		return nil, fmt.Errorf("failed to parse remote metadata: %w", err)
 	}
 	return &rawMeta, nil
 }
 
-func getInspectVersionStats(metadata *tsyncv1.BackupMetadata, v *tsyncv1.Version) (int, int64, int64, error) {
+func getInspectVersionStats(metadata *tsyncv2.BackupMetadata, v *tsyncv2.Version) (int, int64, int64, error) {
 	resolvedMap, err := tsync.ResolveVersionMap(metadata, v.SnowflakeId)
 	if err != nil {
 		return 0, 0, 0, err
@@ -360,13 +389,14 @@ func init() {
 	inspectCmd.PersistentFlags().StringVarP(&inspectFile, "file", "f", "", "Path to a local .tsync metadata file")
 	inspectCmd.PersistentFlags().StringVarP(&inspectRemote, "remote", "r", "", "Name of the remote store to inspect")
 
-	inspectVersionCmd.Flags().BoolVar(&inspectVersionRaw, "raw", false, "Show raw delta changes/deletions instead of resolved path map")
+	inspectVersionCmd.Flags().BoolVar(&inspectVersionRaw, "raw", false, "Show raw tree structure instead of resolved path map")
 
 	inspectCmd.AddCommand(inspectSummaryCmd)
 	inspectCmd.AddCommand(inspectVersionsCmd)
 	inspectCmd.AddCommand(inspectVersionCmd)
 	inspectCmd.AddCommand(inspectFilesCmd)
 	inspectCmd.AddCommand(inspectFileCmd)
+	inspectCmd.AddCommand(inspectTreeCmd)
 
 	RootCmd.AddCommand(inspectCmd)
 }

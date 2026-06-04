@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/abyii/t-sync-sdk-go/tsync"
-	tsyncv1 "github.com/abyii/t-sync-sdk-go/gen/go/com/github/abyii/tsync/v1"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
+	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -42,7 +42,7 @@ var showCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		var metadata tsyncv1.BackupMetadata
+		var metadata tsyncv2.BackupMetadata
 		if err := proto.Unmarshal(pbBytes, &metadata); err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing metadata: %v\n", err)
 			os.Exit(1)

@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abyii/t-sync-sdk-go/tsync"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	"t-sync-cli/cmd"
 )
 
@@ -394,7 +394,7 @@ func TestCLI_EndToEnd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspect raw delta version failed: %v, output: %s", err, out)
 	}
-	if !strings.Contains(out, "Delta Changes:") || !strings.Contains(out, "Delta Deleted:") {
+	if !strings.Contains(out, "Raw Tree Structure:") || !strings.Contains(out, "file1.txt") {
 		t.Errorf("Unexpected raw inspect output: %s", out)
 	}
 

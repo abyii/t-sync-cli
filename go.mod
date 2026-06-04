@@ -2,10 +2,10 @@ module t-sync-cli
 
 go 1.24.4
 
-replace github.com/abyii/t-sync-sdk-go => ../t-sync-sdk-go
+replace github.com/abyii/t-sync-sdk-go/v2 => ../t-sync-sdk-go
 
 require (
-	github.com/abyii/t-sync-sdk-go v1.1.1
+	github.com/abyii/t-sync-sdk-go/v2 v2.0.0-00010101000000-000000000000
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/spf13/cobra v1.10.2

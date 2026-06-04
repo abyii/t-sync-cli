@@ -6,8 +6,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/abyii/t-sync-sdk-go/tsync"
-	tsyncv1 "github.com/abyii/t-sync-sdk-go/gen/go/com/github/abyii/tsync/v1"
+	"github.com/abyii/t-sync-sdk-go/v2/tsync"
+	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -51,44 +51,13 @@ var logCmd = &cobra.Command{
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "VERSION ID\tTIMESTAMP\tKIND\tFILES\tSIZE\tCOMPRESSED\tLABEL")
 		
-		// For calculating statistics, we need to access the underlying proto metadata
-		// The StoreMetadata type doesn't export the direct proto struct directly except through package?
-		// Wait! The StoreMetadata has an unexported 'metadata' field.
-		// Let's check how we can get versions and files.
-		// Wait, sm.Versions() returns []*tsyncv1.Version.
-		// Let's check if the sdk has public methods on StoreMetadata or if we can read the raw metadata ourselves.
-		// In client.go, client.ListVersions(ctx) unmarshals and returns []*tsyncv1.Version.
-		// Wait, if we can read the raw metadata bytes ourselves:
-		// Yes, we can read `.tsync` and unmarshal it directly! That gives us full access to the proto struct.
-		// Let's do that! It is very easy and 100% safe.
-		
 		pbBytes, err := destStore.Read(ctx, ".tsync")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error reading metadata: %v\n", err)
 			os.Exit(1)
 		}
 		
-		var rawMeta tsyncv1.BackupMetadata
-		// Wait! Let's check the import path of proto: it's "google.golang.org/protobuf/proto"
-		// Let's check if there's any helper function. We can unmarshal it using proto.Unmarshal
-		// We've imported google.golang.org/protobuf/proto in client.go. We can do the same.
-		// Let's write the unmarshal logic.
-		
-		// Import proto is needed in this file if we unmarshal.
-		
-		// Let's write the tabwriter log formatting.
-		
-		// Wait, we can define a small helper function to unmarshal inside log.go:
-		
-		// We'll import "google.golang.org/protobuf/proto" in this file.
-		
-		// Let's check if the proto.Unmarshal matches. Yes.
-		
-		// Let's do it!
-		
-		// Wait, let's write it in Go:
-		
-		// we'll get the raw meta:
+		var rawMeta tsyncv2.BackupMetadata
 		err = proto.Unmarshal(pbBytes, &rawMeta)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing metadata: %v\n", err)
@@ -101,9 +70,9 @@ var logCmd = &cobra.Command{
 				fmt.Fprintf(os.Stderr, "Warning: failed to calculate stats for version %d: %v\n", v.SnowflakeId, statsErr)
 			}
 			
-			kindStr := "FULL"
-			if v.Kind == tsyncv1.VersionKind_VERSION_KIND_DELTA {
-				kindStr = fmt.Sprintf("DELTA (->%d)", v.ParentId)
+			kindStr := "SNAPSHOT"
+			if v.PrecedingVersionId != 0 {
+				kindStr = fmt.Sprintf("SNAPSHOT (->%d)", v.PrecedingVersionId)
 			}
 			
 			fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%s\t%s\t%s\n", 
@@ -120,7 +89,7 @@ var logCmd = &cobra.Command{
 	},
 }
 
-func getVersionStats(metadata *tsyncv1.BackupMetadata, v *tsyncv1.Version) (int, int64, int64, error) {
+func getVersionStats(metadata *tsyncv2.BackupMetadata, v *tsyncv2.Version) (int, int64, int64, error) {
 	resolvedMap, err := tsync.ResolveVersionMap(metadata, v.SnowflakeId)
 	if err != nil {
 		return 0, 0, 0, err
