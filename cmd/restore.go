@@ -67,7 +67,7 @@ Use --interactive to selectively check files from a checklist TUI.`,
 			os.Exit(1)
 		}
 
-		resolvedMap, err := tsync.ResolveVersionMap(&metadata, versionID)
+		resolvedMap, err := ResolveVersionMap(&metadata, versionID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error resolving version %d: %v\n", versionID, err)
 			os.Exit(1)

@@ -94,7 +94,7 @@ var logCmd = &cobra.Command{
 }
 
 func getVersionStats(metadata *tsyncv2.BackupMetadata, v *tsyncv2.Version) (int, int64, int64, error) {
-	resolvedMap, err := tsync.ResolveVersionMap(metadata, v.SnowflakeId)
+	resolvedMap, err := ResolveVersionMap(metadata, v.SnowflakeId)
 	if err != nil {
 		return 0, 0, 0, err
 	}

@@ -8,7 +8,6 @@ import (
 	"text/tabwriter"
 
 	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
-	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -172,7 +171,7 @@ var inspectVersionCmd = &cobra.Command{
 			fmt.Println("\nRaw Tree Structure:")
 			printRawTree(v.RootTreeHash, "  ", meta.Trees)
 		} else {
-			resolvedMap, err := tsync.ResolveVersionMap(meta, versionID)
+			resolvedMap, err := ResolveVersionMap(meta, versionID)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error resolving version map: %v\n", err)
 				os.Exit(1)
@@ -372,7 +371,7 @@ func loadMetadata() (*tsyncv2.BackupMetadata, error) {
 }
 
 func getInspectVersionStats(metadata *tsyncv2.BackupMetadata, v *tsyncv2.Version) (int, int64, int64, error) {
-	resolvedMap, err := tsync.ResolveVersionMap(metadata, v.SnowflakeId)
+	resolvedMap, err := ResolveVersionMap(metadata, v.SnowflakeId)
 	if err != nil {
 		return 0, 0, 0, err
 	}

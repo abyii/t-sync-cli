@@ -9,7 +9,6 @@ import (
 
 	"t-sync-cli/tui"
 
-	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -58,7 +57,7 @@ search, and view detailed metadata for each file.`,
 			os.Exit(1)
 		}
 
-		resolvedMap, err := tsync.ResolveVersionMap(&metadata, versionID)
+		resolvedMap, err := ResolveVersionMap(&metadata, versionID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error resolving version %d: %v\n", versionID, err)
 			os.Exit(1)

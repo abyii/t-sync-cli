@@ -27,10 +27,12 @@ $targetExe = Join-Path $binDir 'tsync.exe'
 
 Write-Host ('Target path: ' + $targetExe) -ForegroundColor Gray
 
+Set-Location $PSScriptRoot
+
 # 3. Compile the Go CLI
 Write-Host 'Building tsync.exe...' -ForegroundColor Gray
 $startTime = [System.DateTime]::Now
-& go build -o tsync.exe main.go
+& go build -o tsync.exe .
 if ($LastExitCode -ne 0) {
     Write-Error 'Failed to compile the tsync CLI.'
     exit 1
@@ -46,6 +48,12 @@ if (-not (Test-Path $binDir)) {
 
 Write-Host ('Installing tsync.exe to ' + $binDir + ' ...') -ForegroundColor Gray
 Copy-Item -Path 'tsync.exe' -Destination $targetExe -Force
+
+$winAppsExe = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\tsync.exe"
+if (Test-Path $winAppsExe) {
+    Copy-Item -Path 'tsync.exe' -Destination $winAppsExe -Force -ErrorAction SilentlyContinue
+}
+
 Remove-Item -Path 'tsync.exe' -ErrorAction SilentlyContinue
 
 Write-Host '==========================================' -ForegroundColor Green

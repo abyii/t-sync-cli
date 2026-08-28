@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
@@ -55,13 +54,13 @@ var diffCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		map1, err := tsync.ResolveVersionMap(&metadata, v1ID)
+		map1, err := ResolveVersionMap(&metadata, v1ID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error resolving version %d: %v\n", v1ID, err)
 			os.Exit(1)
 		}
 
-		map2, err := tsync.ResolveVersionMap(&metadata, v2ID)
+		map2, err := ResolveVersionMap(&metadata, v2ID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error resolving version %d: %v\n", v2ID, err)
 			os.Exit(1)

@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/abyii/t-sync-sdk-go/v2/tsync"
 	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
@@ -52,7 +51,7 @@ var showCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		resolvedMap, err := tsync.ResolveVersionMap(&metadata, versionID)
+		resolvedMap, err := ResolveVersionMap(&metadata, versionID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error resolving version %d: %v\n", versionID, err)
 			os.Exit(1)

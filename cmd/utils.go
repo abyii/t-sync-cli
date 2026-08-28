@@ -13,7 +13,14 @@ import (
 	_ "github.com/abyii/t-sync-sdk-go/v2/storage_clients/oci"
 	_ "github.com/abyii/t-sync-sdk-go/v2/storage_clients/s3"
 	"github.com/abyii/t-sync-sdk-go/v2/tsync"
+	tsyncv2 "github.com/abyii/t-sync-sdk-go/v2/gen/go/com/github/abyii/tsync/v2"
 )
+
+// ResolveVersionMap resolves a Version's path-to-key mapping using SDK v2 ResolveVersionTree.
+func ResolveVersionMap(metadata *tsyncv2.BackupMetadata, versionID uint64) (map[string]string, error) {
+	files, _, err := tsync.ResolveVersionTree(metadata, versionID, false)
+	return files, err
+}
 
 var StorageOverride tsync.Storage
 

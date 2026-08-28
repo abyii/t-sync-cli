@@ -10,6 +10,16 @@ import (
 )
 
 var (
+	CLIVersion = "v2.0.11"
+	SDKVersion = "v2.0.11"
+)
+
+// GetVersionString returns formatted CLI and SDK version.
+func GetVersionString() string {
+	return fmt.Sprintf("tsync CLI %s (SDK %s)", CLIVersion, SDKVersion)
+}
+
+var (
 	cfgDirOverride string
 	repoConfig     *config.Config
 	currentDir     string
@@ -17,10 +27,21 @@ var (
 
 var RootCmd = &cobra.Command{
 	Use:   "tsync",
-	Short: "T-Sync: An interactive, secure, incremental backup CLI",
-	Long: `T-Sync is a secure, incremental, and highly optimized backup format 
-that shards files into compressed and encrypted parts. This CLI provides 
-Git-like ergonomics for backing up and restoring directories.`,
+	Short: "Git like CLI for tsync - a fast, secure, incremental, backup format",
+	Long:  "Git like CLI for tsync - a fast, secure, incremental, backup format",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(GetVersionString())
+		fmt.Println()
+		cmd.Help()
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print CLI and SDK version information",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(GetVersionString())
+	},
 }
 
 func init() {
@@ -31,7 +52,13 @@ func init() {
 		os.Exit(1)
 	}
 
+	RootCmd.Version = GetVersionString()
+	RootCmd.SetVersionTemplate("{{.Version}}\n")
+	RootCmd.Flags().BoolP("version", "v", false, "Show version information for tsync")
+
 	RootCmd.PersistentFlags().StringVar(&cfgDirOverride, "repo-path", "", "Path to the repository root directory (defaults to current directory)")
+
+	RootCmd.AddCommand(versionCmd)
 }
 
 // GetRepoPath returns the directory being operated on (either current or overridden)

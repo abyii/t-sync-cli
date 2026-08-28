@@ -69,9 +69,9 @@ jobs:
         working-directory: t-sync-cli
         run: |
           CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build \
-            -ldflags="-s -w" \
+            -ldflags="-s -w -X t-sync-cli/cmd.CLIVersion=${{ github.ref_name }}" \
             -o ${{ matrix.binary_name }} \
-            main.go
+            .
 
       - name: Set up UPX
         if: ${{ matrix.compress }}
