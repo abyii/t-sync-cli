@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	CLIVersion = "v1.0.2"
+	CLIVersion = "v1.0.3"
 	SDKVersion = "v2.2.1"
 )
 

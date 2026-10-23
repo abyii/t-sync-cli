@@ -3,7 +3,7 @@ package tui
 import (
 	"fmt"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -75,7 +75,7 @@ func buildTree(items []FileItem) *TreeNode {
 	for i := range items {
 		item := &items[i]
 		parts := strings.Split(filepath.ToSlash(item.Path), "/")
-		
+
 		current := root
 		var currentPath []string
 		for idx, part := range parts {
@@ -84,9 +84,9 @@ func buildTree(items []FileItem) *TreeNode {
 			}
 			currentPath = append(currentPath, part)
 			fullPath := strings.Join(currentPath, "/")
-			
+
 			isLast := idx == len(parts)-1
-			
+
 			var found *TreeNode
 			for _, child := range current.Children {
 				if child.Name == part && child.IsDir == !isLast {
@@ -94,7 +94,7 @@ func buildTree(items []FileItem) *TreeNode {
 					break
 				}
 			}
-			
+
 			if found == nil {
 				newNode := &TreeNode{
 					Name:   part,
@@ -113,16 +113,19 @@ func buildTree(items []FileItem) *TreeNode {
 			}
 		}
 	}
-	
+
 	return root
 }
 
 func sortChildren(children []*TreeNode) {
-	sort.Slice(children, func(i, j int) bool {
-		if children[i].IsDir != children[j].IsDir {
-			return children[i].IsDir
+	slices.SortFunc(children, func(a, b *TreeNode) int {
+		if a.IsDir != b.IsDir {
+			if a.IsDir {
+				return -1
+			}
+			return 1
 		}
-		return strings.ToLower(children[i].Name) < strings.ToLower(children[j].Name)
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 }
 
@@ -143,13 +146,13 @@ func (m BrowserModel) Init() tea.Cmd {
 func (m *BrowserModel) getVisibleNodes() []*TreeNode {
 	var list []*TreeNode
 	query := strings.ToLower(m.Filter)
-	
+
 	var traverse func(*TreeNode)
 	traverse = func(node *TreeNode) {
 		if node != m.Root {
 			list = append(list, node)
 		}
-		
+
 		shouldExpand := node.Expanded || (query != "")
 		if node.IsDir && shouldExpand {
 			for _, child := range node.Children {
@@ -159,7 +162,7 @@ func (m *BrowserModel) getVisibleNodes() []*TreeNode {
 			}
 		}
 	}
-	
+
 	for _, child := range m.Root.Children {
 		if query == "" || child.matchesFilter(query) {
 			traverse(child)
@@ -271,23 +274,20 @@ func (m BrowserModel) View() string {
 
 	visible := m.getVisibleNodes()
 	leftLines := make([]string, 0)
-	
+
 	maxVisible := 16
 	startIdx := 0
 	if m.Cursor >= maxVisible {
 		startIdx = m.Cursor - maxVisible + 1
 	}
-	endIdx := startIdx + maxVisible
-	if endIdx > len(visible) {
-		endIdx = len(visible)
-	}
+	endIdx := min(startIdx+maxVisible, len(visible))
 
 	for i := startIdx; i < endIdx; i++ {
 		node := visible[i]
-		
+
 		depth := node.depth()
 		indent := strings.Repeat("  ", depth)
-		
+
 		icon := "📄 "
 		if node.IsDir {
 			if node.Expanded {
@@ -296,7 +296,7 @@ func (m BrowserModel) View() string {
 				icon = "▶ 📁 "
 			}
 		}
-		
+
 		row := indent + icon + node.Name
 		if len(row) > 48 {
 			row = row[:45] + "..."
@@ -359,7 +359,7 @@ func (m BrowserModel) View() string {
 			var fileCount int
 			var totalSize int64
 			var totalCompSize int64
-			
+
 			var countStats func(*TreeNode)
 			countStats = func(n *TreeNode) {
 				if !n.IsDir {
@@ -373,7 +373,7 @@ func (m BrowserModel) View() string {
 				}
 			}
 			countStats(node)
-			
+
 			savings := 0.0
 			if totalSize > 0 {
 				savings = 100.0 - (float64(totalCompSize) / float64(totalSize) * 100.0)

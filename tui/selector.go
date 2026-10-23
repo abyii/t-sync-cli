@@ -43,13 +43,13 @@ func (m SelectorModel) Init() tea.Cmd {
 func (m *SelectorModel) getVisibleNodes() []*TreeNode {
 	var list []*TreeNode
 	query := strings.ToLower(m.Filter)
-	
+
 	var traverse func(*TreeNode)
 	traverse = func(node *TreeNode) {
 		if node != m.Root {
 			list = append(list, node)
 		}
-		
+
 		shouldExpand := node.Expanded || (query != "")
 		if node.IsDir && shouldExpand {
 			for _, child := range node.Children {
@@ -59,7 +59,7 @@ func (m *SelectorModel) getVisibleNodes() []*TreeNode {
 			}
 		}
 	}
-	
+
 	for _, child := range m.Root.Children {
 		if query == "" || child.matchesFilter(query) {
 			traverse(child)
@@ -293,23 +293,20 @@ func (m SelectorModel) View() string {
 
 	visible := m.getVisibleNodes()
 	leftLines := make([]string, 0)
-	
+
 	maxVisible := 15
 	startIdx := 0
 	if m.Cursor >= maxVisible {
 		startIdx = m.Cursor - maxVisible + 1
 	}
-	endIdx := startIdx + maxVisible
-	if endIdx > len(visible) {
-		endIdx = len(visible)
-	}
+	endIdx := min(startIdx+maxVisible, len(visible))
 
 	for i := startIdx; i < endIdx; i++ {
 		node := visible[i]
-		
+
 		depth := node.depth()
 		indent := strings.Repeat("  ", depth)
-		
+
 		icon := "📄 "
 		if node.IsDir {
 			if node.Expanded {
@@ -318,7 +315,7 @@ func (m SelectorModel) View() string {
 				icon = "▶ 📁 "
 			}
 		}
-		
+
 		cbStr := getNodeCheckbox(node, m.Selected)
 		checkbox := cbStr
 		if cbStr == "[x]" {
@@ -331,7 +328,7 @@ func (m SelectorModel) View() string {
 		if !node.IsDir {
 			sizeStr = fmt.Sprintf(" (%s)", FormatBytes(node.Item.Size))
 		}
-		
+
 		rowText := fmt.Sprintf("%s %s%s%s%s", checkbox, indent, icon, node.Name, sizeStr)
 		if len(rowText) > 80 {
 			rowText = rowText[:77] + "..."
