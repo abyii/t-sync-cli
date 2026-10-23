@@ -47,7 +47,7 @@ func (m *MemStorage) Read(ctx context.Context, path string) ([]byte, error) {
 	defer m.mu.RUnlock()
 	data, ok := m.files[path]
 	if !ok {
-		return nil, os.ErrNotExist
+		return nil, fmt.Errorf("%w: %s", tsync.ErrNotFound, path)
 	}
 	cp := make([]byte, len(data))
 	copy(cp, data)
@@ -91,7 +91,7 @@ func (m *MemStorage) OpenReader(ctx context.Context, path string) (io.ReadCloser
 	defer m.mu.RUnlock()
 	data, ok := m.files[path]
 	if !ok {
-		return nil, os.ErrNotExist
+		return nil, fmt.Errorf("%w: %s", tsync.ErrNotFound, path)
 	}
 	return io.NopCloser(bytes.NewReader(data)), nil
 }

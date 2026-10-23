@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	CLIVersion = "v2.0.11"
-	SDKVersion = "v2.0.11"
+	CLIVersion = "v1.0.2"
+	SDKVersion = "v2.2.1"
 )
 
 // GetVersionString returns formatted CLI and SDK version.
